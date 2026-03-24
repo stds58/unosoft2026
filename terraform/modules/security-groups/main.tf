@@ -12,8 +12,13 @@ resource "yandex_vpc_security_group" "sg" {
     }
   }
 
-  egress {
-    protocol       = "any"
-    v4_cidr_blocks = ["0.0.0.0/0"]
+  dynamic "egress" {
+    for_each = var.egress_rules
+    content {
+      protocol       = egress.value.protocol
+      port           = egress.value.port
+      description    = egress.value.description
+      v4_cidr_blocks = egress.value.v4_cidr_blocks
+    }
   }
 }

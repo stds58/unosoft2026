@@ -23,7 +23,63 @@ module "sg_bastion" {
       protocol       = "tcp"
       port           = 22
       description    = "SSH from Admin PC"
-      v4_cidr_blocks = ["0.0.0.0/0"] # Разрешаем SSH-доступ с любого IP
+      v4_cidr_blocks = ["0.0.0.0/0"]
+    },
+    {
+      protocol       = "tcp"
+      port           = 3128
+      description    = "HTTP Proxy from Internal Network"
+      v4_cidr_blocks = ["192.168.1.0/24"]
+    }
+  ]
+  egress_rules = [
+    {
+      protocol       = "tcp"
+      port           = 22
+      description    = "SSH from Admin PC"
+      v4_cidr_blocks = ["192.168.1.197/32"]
+    },
+    {
+      protocol       = "TCP"
+      port           = 80
+      description    = "HTTP outbound"
+      v4_cidr_blocks = ["0.0.0.0/0"]
+    },
+    {
+      protocol       = "TCP"
+      port           = 443
+      description    = "HTTPS outbound"
+      v4_cidr_blocks = ["0.0.0.0/0"]
+    },
+    {
+      protocol       = "UDP"
+      port           = 53
+      description    = "DNS outbound"
+      v4_cidr_blocks = ["0.0.0.0/0"]
+    },
+    {
+      protocol       = "TCP"
+      port           = 53
+      description    = "DNS TCP outbound"
+      v4_cidr_blocks = ["0.0.0.0/0"]
+    },
+    {
+      protocol       = "tcp"
+      port           = 9042
+      description    = "Cassandra CQL to Node A"
+      v4_cidr_blocks = ["192.168.1.197/32"]
+    },
+    {
+      protocol       = "tcp"
+      port           = 9043
+      description    = "Cassandra CQL to Node A (Port 9043)"
+      v4_cidr_blocks = ["192.168.1.197/32"]
+    },
+    {
+      protocol       = "tcp"
+      port           = 9044
+      description    = "Cassandra CQL to Node A (Port 9044)"
+      v4_cidr_blocks = ["192.168.1.197/32"]
     }
   ]
 }
@@ -38,7 +94,7 @@ module "sg_cassandra_cluster" {
       protocol       = "tcp"
       port           = 22
       description    = "SSH from Bastion"
-      #v4_cidr_blocks = ["${module.vm-b.internal_ip_address}/32"] # Доступ к vm-a только из vm-b
+      #v4_cidr_blocks = ["${module.vm-b.internal_ip_address}/32"]
       v4_cidr_blocks = ["192.168.1.198/32"]
     },
     {
@@ -52,6 +108,26 @@ module "sg_cassandra_cluster" {
       port           = 7000
       description    = "Cassandra Inter-node"
       v4_cidr_blocks = ["192.168.1.0/24"]
+    }
+  ]
+  egress_rules = [
+    {
+      protocol       = "TCP"
+      port           = 3128
+      description    = "Allow HTTP Proxy to Bastion"
+      v4_cidr_blocks = ["192.168.1.198/32"]
+    },
+    {
+      protocol       = "UDP"
+      port           = 53
+      description    = "DNS to Yandex Internal Resolver"
+      v4_cidr_blocks = ["169.254.169.253/32"]
+    },
+    {
+      protocol       = "TCP"
+      port           = 53
+      description    = "DNS TCP to Yandex Internal Resolver"
+      v4_cidr_blocks = ["169.254.169.253/32"]
     }
   ]
 

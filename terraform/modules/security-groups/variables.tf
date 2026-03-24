@@ -18,3 +18,14 @@ variable "ingress_rules" {
     }))
   default = []
 }
+
+variable "egress_rules" {
+  description = "List of egress rules for the security group.."
+  type = list(object({
+    protocol       = string
+    port           = number
+    description    = string
+    v4_cidr_blocks = list(string)
+  }))
+  default = []
+}
