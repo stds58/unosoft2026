@@ -1,15 +1,16 @@
 ---
-- name: Configure Bastion (Proxy)
-  hosts: bastion
-  become: yes
-  gather_facts: yes
-  roles:
-    - role: tinyproxy
+#- name: Configure Bastion (Proxy)
+#  hosts: bastion
+#  become: yes
+#  gather_facts: yes
+#  roles:
+#    - role: tinyproxy
+#    - role: cassandra-client
 
 - name: Configure Cassandra Nodes (Docker + Cluster)
   hosts: cassandra
   become: yes
   gather_facts: yes
   roles:
-    - role: docker
+    #- role: docker
     - role: cassandra-cluster
