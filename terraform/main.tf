@@ -94,19 +94,24 @@ module "sg_cassandra_cluster" {
       protocol       = "tcp"
       port           = 22
       description    = "SSH from Bastion"
-      #v4_cidr_blocks = ["${module.vm-b.internal_ip_address}/32"]
       v4_cidr_blocks = ["192.168.1.198/32"]
     },
     {
       protocol       = "tcp"
       port           = 9042
       description    = "Cassandra CQL from Bastion"
-      v4_cidr_blocks = ["192.168.1.198/32"]
+      v4_cidr_blocks = ["192.168.1.0/24"]
     },
     {
       protocol       = "tcp"
       port           = 7000
       description    = "Cassandra Inter-node"
+      v4_cidr_blocks = ["192.168.1.0/24"]
+    },
+    {
+      protocol       = "tcp"
+      port           = 7199
+      description    = "Cassandra JMX"
       v4_cidr_blocks = ["192.168.1.0/24"]
     }
   ]
