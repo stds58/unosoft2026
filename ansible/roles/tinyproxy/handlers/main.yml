@@ -1,0 +1,6 @@
+---
+- name: Restart Tinyproxy
+  ansible.builtin.service:
+    name: tinyproxy
+    state: restarted
+  become: true

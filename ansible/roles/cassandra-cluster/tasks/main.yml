@@ -1,0 +1,105 @@
+---
+- name: Detect Network Interface
+  ansible.builtin.set_fact:
+    docker_parent_interface: "{{ ansible_default_ipv4.interface | default('eth0') }}"
+
+- name: Ensure project directory exists
+  ansible.builtin.file:
+    path: /opt/cassandra-cluster
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Copy Dockerfile to VM
+  ansible.builtin.copy:
+    src: Dockerfile
+    dest: /opt/cassandra-cluster/Dockerfile
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+- name: Copy entrypoint.sh to VM
+  ansible.builtin.copy:
+    src: entrypoint.sh
+    dest: /opt/cassandra-cluster/entrypoint.sh
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Copy sshd_config to VM
+  ansible.builtin.copy:
+    src: sshd_config
+    dest: /opt/cassandra-cluster/sshd_config
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+- name: Copy Public SSH Key for containers
+  ansible.builtin.copy:
+    src: "/home/valar/.ssh/bastion_to_cluster_key.pub"
+    dest: /opt/cassandra-cluster/bastion_to_cluster_key.pub
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+- name: Create .env file
+  ansible.builtin.template:
+    src: .env.j2
+    dest: /opt/cassandra-cluster/.env
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+
+- name: Create docker-compose.yml from template
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: /opt/cassandra-cluster/docker-compose.yml
+    owner: ubuntu
+    group: ubuntu
+    mode: '0644'
+
+- name: Build and Start Cassandra Cluster
+  ansible.builtin.shell: >
+    docker compose build
+    --build-arg HTTP_PROXY=http://{{ bastion_ip }}:{{ proxy_port }}
+    --build-arg HTTPS_PROXY=http://{{ bastion_ip }}:{{ proxy_port }}
+    --build-arg NO_PROXY=localhost,127.0.0.1,192.168.1.0/24
+    && docker compose up -d --force-recreate
+  args:
+    chdir: /opt/cassandra-cluster
+  register: compose_up
+  become_user: ubuntu
+  environment:
+    HTTP_PROXY: "http://{{ bastion_ip }}:{{ proxy_port }}"
+    HTTPS_PROXY: "http://{{ bastion_ip }}:{{ proxy_port }}"
+    NO_PROXY: "localhost,127.0.0.1,192.168.1.0/24"
+
+- name: Wait for Cassandra nodes to be running
+  ansible.builtin.command: docker compose ps --format json
+  args:
+    chdir: /opt/cassandra-cluster
+  register: cluster_status
+  until: >
+    (cluster_status.stdout_lines | map('from_json') | list | length) >= 3 and
+    (cluster_status.stdout_lines | map('from_json') | selectattr('Status', 'search', 'running|Up') | list | length) >= 3
+  retries: 5
+  delay: 20
+  become_user: ubuntu
+
+- name: Verify Cluster Status (nodetool)
+  ansible.builtin.command: >
+    docker exec cassandra-cluster-cassandra-node1-1 nodetool status
+  args:
+    chdir: /opt/cassandra-cluster
+  register: nodetool_result
+  retries: 10
+  delay: 15
+  until: "'UN' in nodetool_result.stdout"
+  failed_when: false
+  become_user: ubuntu
+
+- name: Show Cluster Status
+  ansible.builtin.debug:
+    var: nodetool_result.stdout_lines
+  when: nodetool_result.stdout is defined and nodetool_result.stdout != ""

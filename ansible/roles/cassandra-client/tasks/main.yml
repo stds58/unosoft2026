@@ -1,0 +1,35 @@
+---
+- name: Install Python3 and pip
+  ansible.builtin.apt:
+    name:
+      - python3
+      - python3-pip
+    state: present
+    update_cache: yes
+
+- name: Install cassandra-driver
+  ansible.builtin.pip:
+    name: cassandra-driver
+    state: present
+    executable: pip3
+    extra_args: "--break-system-packages"
+
+- name: Install cqlsh
+  ansible.builtin.pip:
+    name: cqlsh
+    state: present
+    executable: pip3
+    extra_args: "--break-system-packages"
+
+- name: Verify cqlsh is installed
+  ansible.builtin.command: cqlsh --version
+  register: cqlsh_version
+  changed_when: false
+  become: true
+  become_user: ubuntu
+  environment:
+    PATH: "{{ ansible_env.PATH }}:/usr/local/bin"
+
+- name: Show cqlsh version
+  ansible.builtin.debug:
+    var: cqlsh_version.stdout
