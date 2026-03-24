@@ -1,0 +1,15 @@
+---
+# Proxy settings
+bastion_ip: "192.168.1.198"
+proxy_port: 3128
+
+# Docker proxy env (for cassandra hosts)
+http_proxy: "http://{{ bastion_ip }}:{{ proxy_port }}"
+https_proxy: "http://{{ bastion_ip }}:{{ proxy_port }}"
+no_proxy: "localhost,127.0.0.1,.local"
+
+# Явно указываем Ansible передавать эти переменные в среду выполнения
+ansible_env:
+  http_proxy: "{{ http_proxy }}"
+  https_proxy: "{{ https_proxy }}"
+  no_proxy: "{{ no_proxy }}"
