@@ -74,7 +74,14 @@
       StartServers 10
       Allow 192.168.1.0/24
       ConnectPort 443
-      ConnectPort 563
+      ConnectPort 80
+      ConnectPort 53
+      ConnectPort 9042
+      ConnectPort 9043
+      ConnectPort 9044
+      ConnectPort 7000
+      ConnectPort 7001
+      ConnectPort 7199
     dest: /etc/tinyproxy/tinyproxy.conf
     owner: root
     group: root

@@ -1,0 +1,36 @@
+formatter: "markdown table"
+
+output:
+  file: "README_TERRAFORM.md"
+  mode: inject
+  template: |
+    <!-- BEGIN_TF_DOCS -->
+    {{ .Content }}
+    <!-- END_TF_DOCS -->
+
+settings:
+  anchor: true
+  color: true
+  default: true
+  description: true
+  escape: true
+  hide-empty: true
+  indent: 2
+  lockfile: true
+  required: true
+  sensitive: true
+  type: true
+
+content: |-
+  {{ .Requirements }}
+  
+  {{ .Providers }}
+  
+  {{ .Modules }}
+  
+  {{ .Inputs }}
+  
+  {{ .Outputs }}
+  
+  {{ .Resources }}
+  

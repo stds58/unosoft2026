@@ -12,20 +12,22 @@ services:
         - NO_PROXY=localhost,127.0.0.1
     hostname: {{ node.name }}
     ports:
-      - "{{ node.port }}:9042"
       - "{{ node.ssh_port }}:22"
     environment:
       - CASSANDRA_CLUSTER_NAME={{ cassandra_cluster_name }}
-      - CASSANDRA_SEEDS={{ cassandra_nodes[0].container_ip }}
-      - CASSANDRA_LISTEN_ADDRESS={{ node.container_ip }}
-      - CASSANDRA_BROADCAST_ADDRESS={{ node.container_ip }}
+      - CASSANDRA_SEEDS={{ cassandra_nodes[0].internal_ip }}
+      - CASSANDRA_LISTEN_ADDRESS={{ node.internal_ip }}
+      - CASSANDRA_BROADCAST_ADDRESS={{ node.internal_ip }}
       - CASSANDRA_BROADCAST_RPC_ADDRESS={{ node.container_ip }}
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
+      - JVM_EXTRA_OPTS=-Djava.rmi.server.hostname={{ node.internal_ip }}
+      - MAX_HEAP_SIZE=1G
+      - HEAP_NEWSIZE=256M
     volumes:
       - {{ node.name }}-data:/var/lib/cassandra
     networks:
       cassandra_net:
-        ipv4_address: {{ node.container_ip }}
+        ipv4_address: {{ node.internal_ip }}
     restart: unless-stopped
 {% if loop.index > 1 %}
     depends_on:
@@ -35,14 +37,11 @@ services:
 
 networks:
   cassandra_net:
-    driver: macvlan
-    driver_opts:
-      parent: {{ docker_parent_interface }}  # eth0 или другой интерфейс хоста
+    driver: bridge
     ipam:
-      driver: default
       config:
-        - subnet: {{ docker_network_subnet }}  # 192.168.1.0/24
-          gateway: {{ docker_network_gateway }}  # 192.168.1.1
+        - subnet: 172.20.0.0/24
+          gateway: 172.20.0.1
 
 volumes:
 {% for node in cassandra_nodes %}

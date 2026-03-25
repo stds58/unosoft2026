@@ -130,6 +130,8 @@ keys/
 authorized_key.json
 docker.gpg
 *.pub
+group_vars/*_secrets.yml
+host_vars/*_secrets.yml
 
 # Исключение файлов, созданных IDE/редакторами
 ### IntelliJ IDEA ###

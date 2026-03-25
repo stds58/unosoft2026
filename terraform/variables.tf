@@ -12,9 +12,9 @@ variable "folder_id" {
 }
 
 variable "cloud_id" {
-  type    = string
-  sensitive   = true
-  default = ""
+  type      = string
+  sensitive = true
+  default   = ""
 }
 
 variable "ssh_base_path" {
@@ -33,5 +33,17 @@ variable "cluster_key_name" {
   type        = string
   description = "Имя файла ключа для доступа от бастина к кластеру"
   default     = "bastion_to_cluster_key"
+}
+
+variable "cassandra_ip_suffixes" {
+  description = "Список суффиксов IP-адресов для узлов Cassandra"
+  type        = list(number)
+  default     = [197]
+}
+
+variable "bastion_ip_suffixes" {
+  description = "Список суффиксов IP-адресов для узлов бастионa"
+  type        = list(number)
+  default     = [198]
 }
 
