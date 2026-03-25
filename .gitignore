@@ -171,7 +171,3 @@ env/
 .venv/
 .env/
 .env
-
-# прочие папки и файлы
-docs/
-authorized_key.json
