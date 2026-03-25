@@ -271,12 +271,6 @@ DESCRIBE CLUSTER;
 ```
 unosoft2026/
 ├── ansible
-│   ├── docs
-│   │   ├── README.md
-│   │   ├── roles.txt
-│   │   ├── ключ.txt
-│   │   ├── ограничения.txt
-│   │   └── решение_заботы.txt
 │   ├── group_vars
 │   │   └── all.yml
 │   ├── roles
