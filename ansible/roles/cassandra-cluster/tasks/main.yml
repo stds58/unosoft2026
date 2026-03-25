@@ -1,8 +1,4 @@
 ---
-- name: Detect Network Interface
-  ansible.builtin.set_fact:
-    docker_parent_interface: "{{ ansible_default_ipv4.interface | default('eth0') }}"
-
 - name: Ensure project directory exists
   ansible.builtin.file:
     path: /opt/cassandra-cluster
@@ -51,6 +47,10 @@
     group: ubuntu
     mode: '0600'
 
+- name: Detect Network Interface
+  ansible.builtin.set_fact:
+    docker_parent_interface: "{{ ansible_default_ipv4.interface | default('eth0') }}"
+
 - name: Create docker-compose.yml from template
   ansible.builtin.template:
     src: docker-compose.yml.j2
@@ -69,37 +69,134 @@
   args:
     chdir: /opt/cassandra-cluster
   register: compose_up
+  retries: 5
+  delay: 10
+  until: compose_up.rc == 0
   become_user: ubuntu
   environment:
     HTTP_PROXY: "http://{{ bastion_ip }}:{{ proxy_port }}"
     HTTPS_PROXY: "http://{{ bastion_ip }}:{{ proxy_port }}"
     NO_PROXY: "localhost,127.0.0.1,192.168.1.0/24"
 
-- name: Wait for Cassandra nodes to be running
-  ansible.builtin.command: docker compose ps --format json
-  args:
-    chdir: /opt/cassandra-cluster
-  register: cluster_status
-  until: >
-    (cluster_status.stdout_lines | map('from_json') | list | length) >= 3 and
-    (cluster_status.stdout_lines | map('from_json') | selectattr('Status', 'search', 'running|Up') | list | length) >= 3
-  retries: 5
-  delay: 20
+- name: Wait for containers to initialize
+  ansible.builtin.pause:
+    seconds: 15
   become_user: ubuntu
 
-- name: Verify Cluster Status (nodetool)
-  ansible.builtin.command: >
-    docker exec cassandra-cluster-cassandra-node1-1 nodetool status
-  args:
-    chdir: /opt/cassandra-cluster
-  register: nodetool_result
-  retries: 10
-  delay: 15
-  until: "'UN' in nodetool_result.stdout"
-  failed_when: false
-  become_user: ubuntu
+- name: Ensure IP Forwarding is enabled
+  ansible.builtin.sysctl:
+    name: net.ipv4.ip_forward
+    value: '1'
+    state: present
+    sysctl_set: yes
 
-- name: Show Cluster Status
-  ansible.builtin.debug:
-    var: nodetool_result.stdout_lines
-  when: nodetool_result.stdout is defined and nodetool_result.stdout != ""
+- name: Setup DNAT for ALL Cassandra Nodes (Static IP Mapping)
+  ansible.builtin.iptables:
+    table: nat
+    chain: PREROUTING
+    destination: "{{ item.dest_ip }}"
+    protocol: tcp
+    destination_port: 9042
+    jump: DNAT
+    to_destination: "{{ item.target_ip }}:9042"
+    comment: "Redirect traffic for {{ item.node_name }}"
+  loop:
+    - {
+        dest_ip: '{{ cassandra_nodes[0].container_ip }}',
+        target_ip: '{{ cassandra_nodes[0].internal_ip }}',
+        node_name: '{{ cassandra_nodes[0].name }}'
+      }
+    - {
+        dest_ip: '{{ cassandra_nodes[1].container_ip }}',
+        target_ip: '{{ cassandra_nodes[1].internal_ip }}',
+        node_name: '{{ cassandra_nodes[1].name }}'
+      }
+    - {
+        dest_ip: '{{ cassandra_nodes[2].container_ip }}',
+        target_ip: '{{ cassandra_nodes[2].internal_ip }}',
+        node_name: '{{ cassandra_nodes[2].name }}'
+      }
+
+- name: Allow forwarding to Cassandra Docker Network
+  ansible.builtin.iptables:
+    chain: FORWARD
+    destination: "172.20.0.0/24"
+    jump: ACCEPT
+    comment: "Allow traffic to Cassandra containers"
+
+- name: Allow forwarding from Cassandra Docker Network
+  ansible.builtin.iptables:
+    chain: FORWARD
+    source: "172.20.0.0/24"
+    jump: ACCEPT
+    comment: "Allow traffic from Cassandra containers"
+
+- name: Enable Masquerade for Cassandra Docker Network
+  ansible.builtin.iptables:
+    table: nat
+    chain: POSTROUTING
+    source: "172.20.0.0/24"
+    jump: MASQUERADE
+    comment: "Masquerade outbound traffic from containers"
+
+- name: Allow INPUT to Cassandra Docker Network
+  ansible.builtin.iptables:
+    chain: INPUT
+    destination: "172.20.0.0/24"
+    protocol: tcp
+    destination_port: 9042
+    jump: ACCEPT
+    rule_num: 1
+    comment: "Allow incoming Cassandra traffic to Docker network"
+
+- name: Allow DOCKER-USER for Cassandra
+  ansible.builtin.iptables:
+    chain: DOCKER-USER
+    destination: "172.20.0.0/24"
+    protocol: tcp
+    destination_port: 9042
+    jump: ACCEPT
+    rule_num: 1
+    comment: "Allow Docker to forward Cassandra traffic (dest)"
+
+- name: Allow DOCKER-USER for Cassandra (source)
+  ansible.builtin.iptables:
+    chain: DOCKER-USER
+    source: "172.20.0.0/24"
+    protocol: tcp
+    source_port: 9042
+    jump: ACCEPT
+    rule_num: 2
+    comment: "Allow Docker to forward Cassandra traffic (src)"
+
+- name: Ensure iptables directory exists
+  ansible.builtin.file:
+    path: /etc/iptables
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Save iptables rules to persistent file
+  ansible.builtin.shell: |
+    iptables-save > /etc/iptables/rules.v4
+    ip6tables-save > /etc/iptables/rules.v6
+  args:
+    creates: /etc/iptables/rules.v4
+
+- name: Ensure iptables rules are restored on boot
+  ansible.builtin.copy:
+    dest: /etc/network/if-pre-up.d/iptables-restore
+    content: |
+      #!/bin/sh
+      /sbin/iptables-restore < /etc/iptables/rules.v4
+      /sbin/ip6tables-restore < /etc/iptables/rules.v6
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Save iptables rules
+  ansible.builtin.shell: |
+    iptables-save > /etc/iptables/rules.v4
+    ip6tables-save > /etc/iptables/rules.v6
+

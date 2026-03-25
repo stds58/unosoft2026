@@ -13,31 +13,37 @@ variable "name" {
 variable "platform_id" {
   description = "Тип платформы (например, standard-v2)"
   type        = string
+  default     = "standard-v3"
 }
 
 variable "cores" {
   description = "Количество vCPU # Определяет количество vCPU"
   type        = number
+  default     = 2
 }
 
 variable "memory" {
   description = "Объем RAM в ГБ # Определяет объем RAM в гигабайтах"
   type        = number
+  default     = 8
 }
 
 variable "core_fraction" {
   description = "Гарантированная доля CPU в процентах # Определяет гарантированную долю CPU в процентах"
   type        = number
+  default     = 100
 }
 
 variable "image_id" {
   description = "ID образа для загрузочного диска"
   type        = string
+  default     = "fd8jjccig145ofgp5b9u"
 }
 
 variable "disk_size" {
   description = "Размер загрузочного диска в ГБ"
   type        = number
+  default     = 20
 }
 
 variable "disk_type" {
@@ -50,11 +56,17 @@ variable "disk_type" {
     Local disk drives on dedicated hosts.
   EOT
   type        = string
+  default     = "network-ssd"
 }
 
-variable "subnet_id" {
-  description = "ID подсети"
-  type        = string
+variable "network_interfaces" {
+  description = "Список сетевых интерфейсов"
+  type = list(object({
+    subnet_id          = string
+    ip_address         = optional(string)
+    nat                = optional(bool, false)
+    security_group_ids = optional(list(string), [])
+  }))
 }
 
 variable "ssh_key_path" {
@@ -62,19 +74,8 @@ variable "ssh_key_path" {
   type        = string
 }
 
-variable "security_group_ids" {
-  description = "Список ID групп безопасности"
-  type        = list(string)
-  default     = []
-}
-
-variable "internal_ip" {
-  description = "Внутренний IP-адрес"
+variable "role" {
+  description = "Роль сервера"
   type        = string
-}
-
-variable "nat" {
-  description = "Внешний IP-адрес"
-  type        = bool
   default     = true
 }

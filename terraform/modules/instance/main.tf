@@ -17,15 +17,26 @@ resource "yandex_compute_instance" "vm" {
     }
   }
 
-  network_interface {
-    subnet_id = var.subnet_id
-    nat       = var.nat
-    ip_address = var.internal_ip
-    security_group_ids = var.security_group_ids
+  dynamic "network_interface" {
+    for_each = var.network_interfaces
+    iterator = iface
+
+    content {
+      subnet_id          = iface.value.subnet_id
+      ip_address         = iface.value.ip_address
+      nat                = iface.value.nat
+      security_group_ids = iface.value.security_group_ids
+    }
   }
 
   metadata = {
-    ssh-keys  = "ubuntu:${file(var.ssh_key_path)}"
+    ssh-keys = "ubuntu:${file(var.ssh_key_path)}"
+  }
+
+  labels = {
+    environment = "develop"
+    terraform   = "true"
+    role        = var.role
   }
 
 }
