@@ -417,13 +417,13 @@ terraform destroy -auto-approve
 
 ### Подключение к Cassandra с бастиона
 
-<img src="img_3.png" alt="Подключение к Cassandra" width="800">
+<img src="img/img_3.png" alt="Подключение к Cassandra" width="800">
 
-<img src="img_4.png" alt="Ноды кластера" width="800">
+<img src="img/img_4.png" alt="Ноды кластера" width="800">
 
 ### VM-A хост. проверка нод кластера
 
-<img src="img_5.png" alt="VM-A" width="800">
+<img src="img/img_5.png" alt="VM-A" width="800">
 
 ---
 
