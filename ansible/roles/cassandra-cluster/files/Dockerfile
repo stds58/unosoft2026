@@ -1,5 +1,4 @@
-FROM cassandra:4.1
-
+FROM cassandra:5.0.0
 
 ARG SSH_KEY_PUB_NAME
 ARG SUDO_PASSWORD
@@ -13,8 +12,6 @@ RUN apt-get update && \
     mkdir -p /var/run/sshd && \
     rm -rf /var/lib/apt/lists/*
 
-
-
 COPY ${SSH_KEY_PUB_NAME} /home/devuser/.ssh/authorized_keys
 RUN chown -R devuser:devuser /home/devuser/.ssh && \
     chmod 700 /home/devuser/.ssh && \
@@ -23,8 +20,6 @@ RUN chown -R devuser:devuser /home/devuser/.ssh && \
 COPY sshd_config /etc/ssh/sshd_config
 
 RUN service ssh start
-
-EXPOSE 22 9042 9043 9044
 
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh

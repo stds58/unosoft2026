@@ -253,6 +253,18 @@ cqlsh 192.168.1.201 9042 -e "SELECT rpc_address, host_id, data_center, rack FROM
 # Подключение к ноде 3
 cqlsh 192.168.1.202 9042
 cqlsh 192.168.1.202 9042 -e "SELECT rpc_address, host_id, data_center, rack FROM system.local;"
+
+# либо используем клиент прямо на ноде:
+ssh -i ~/.ssh/<cluster_key_name> -p 2200 devuser@192.168.1.200
+ssh -i ~/.ssh/<cluster_key_name> -p 2201 devuser@192.168.1.201
+ssh -i ~/.ssh/<cluster_key_name> -p 2202 devuser@192.168.1.202
+
+где <cluster_key_name> имя вашего ssh-ключа с бастиона на вм-а, например bastion_to_cluster_key
+ssh -i ~/.ssh/bastion_to_cluster_key -p 2200 devuser@192.168.1.200
+
+# теперь можем работать с кассандрой
+PATH=/opt/cassandra/bin:$PATH
+cqlsh
 ```
 
 ### Проверка статуса кластера

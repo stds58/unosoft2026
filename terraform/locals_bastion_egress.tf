@@ -7,6 +7,24 @@ locals {
       v4_cidr_blocks = ["192.168.1.0/24"]
     },
     {
+      protocol       = "tcp"
+      port           = 2200
+      description    = "SSH to Cassandra CQL"
+      v4_cidr_blocks = ["192.168.1.0/24"]
+    },
+    {
+      protocol       = "tcp"
+      port           = 2201
+      description    = "SSH to Cassandra CQL"
+      v4_cidr_blocks = ["192.168.1.0/24"]
+    },
+    {
+      protocol       = "tcp"
+      port           = 2202
+      description    = "SSH to Cassandra CQL"
+      v4_cidr_blocks = ["192.168.1.0/24"]
+    },
+    {
       protocol       = "TCP"
       port           = 80
       description    = "HTTP outbound"

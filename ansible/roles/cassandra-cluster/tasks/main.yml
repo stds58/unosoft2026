@@ -72,7 +72,6 @@
   retries: 5
   delay: 10
   until: compose_up.rc == 0
-  become_user: ubuntu
   environment:
     HTTP_PROXY: "http://{{ bastion_ip }}:{{ proxy_port }}"
     HTTPS_PROXY: "http://{{ bastion_ip }}:{{ proxy_port }}"
@@ -81,7 +80,6 @@
 - name: Wait for containers to initialize
   ansible.builtin.pause:
     seconds: 15
-  become_user: ubuntu
 
 - name: Ensure IP Forwarding is enabled
   ansible.builtin.sysctl:
@@ -104,16 +102,19 @@
     - {
         dest_ip: '{{ cassandra_nodes[0].container_ip }}',
         target_ip: '{{ cassandra_nodes[0].internal_ip }}',
+        ssh_external_port: 2200,
         node_name: '{{ cassandra_nodes[0].name }}'
       }
     - {
         dest_ip: '{{ cassandra_nodes[1].container_ip }}',
         target_ip: '{{ cassandra_nodes[1].internal_ip }}',
+        ssh_external_port: 2201,
         node_name: '{{ cassandra_nodes[1].name }}'
       }
     - {
         dest_ip: '{{ cassandra_nodes[2].container_ip }}',
         target_ip: '{{ cassandra_nodes[2].internal_ip }}',
+        ssh_external_port: 2202,
         node_name: '{{ cassandra_nodes[2].name }}'
       }
 
@@ -123,6 +124,15 @@
     destination: "172.20.0.0/24"
     jump: ACCEPT
     comment: "Allow traffic to Cassandra containers"
+
+- name: Allow SSH forwarding to Cassandra Docker Network
+  ansible.builtin.iptables:
+    chain: FORWARD
+    destination: "172.20.0.0/24"
+    protocol: tcp
+    destination_port: 22
+    jump: ACCEPT
+    comment: "Allow SSH to Cassandra containers"
 
 - name: Allow forwarding from Cassandra Docker Network
   ansible.builtin.iptables:
@@ -199,4 +209,3 @@
   ansible.builtin.shell: |
     iptables-save > /etc/iptables/rules.v4
     ip6tables-save > /etc/iptables/rules.v6
-

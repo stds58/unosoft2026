@@ -22,7 +22,7 @@
 
 - name: Install cqlsh
   ansible.builtin.pip:
-    name: cqlsh
+    name: "cqlsh==6.2.0"
     state: present
     executable: pip3
     extra_args: "--break-system-packages"
@@ -31,8 +31,6 @@
   ansible.builtin.command: cqlsh --version
   register: cqlsh_version
   changed_when: false
-  become: true
-  become_user: ubuntu
   environment:
     PATH: "{{ ansible_env.PATH }}:/usr/local/bin"
 

@@ -8,6 +8,24 @@ locals {
     },
     {
       protocol       = "tcp"
+      port           = 2200
+      description    = "SSH from Bastion to Cassandra CQL"
+      v4_cidr_blocks = ["192.168.1.0/24"]
+    },
+    {
+      protocol       = "tcp"
+      port           = 2201
+      description    = "SSH from Bastion to Cassandra CQL"
+      v4_cidr_blocks = ["192.168.1.0/24"]
+    },
+    {
+      protocol       = "tcp"
+      port           = 2202
+      description    = "SSH from Bastion to Cassandra CQL"
+      v4_cidr_blocks = ["192.168.1.0/24"]
+    },
+    {
+      protocol       = "tcp"
       port           = 9042
       description    = "Cassandra CQL from Bastion"
       v4_cidr_blocks = ["192.168.1.0/24"]

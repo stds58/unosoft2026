@@ -10,14 +10,14 @@ cassandra_nodes:
     container_ip: 192.168.1.200
     internal_ip: 172.20.0.10
     port: 9042
-    ssh_port: 2201
+    ssh_port: 2200
   - name: cassandra-node2
     container_ip: 192.168.1.201
     internal_ip: 172.20.0.11
     port: 9042
-    ssh_port: 2202
+    ssh_port: 2201
   - name: cassandra-node3
     container_ip: 192.168.1.202
     internal_ip: 172.20.0.12
     port: 9042
-    ssh_port: 2203
+    ssh_port: 2202

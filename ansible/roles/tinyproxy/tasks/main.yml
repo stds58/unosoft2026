@@ -6,20 +6,17 @@
     update_cache: yes
   retries: 3
   delay: 5
-  #become: true
 
 - name: Stop Tinyproxy service
   ansible.builtin.service:
     name: tinyproxy
     state: stopped
-  #become: true
   failed_when: false
 
 - name: Disable Tinyproxy service
   ansible.builtin.service:
     name: tinyproxy
     enabled: no
-  #become: true
   failed_when: false
 
 - name: Kill any existing tinyproxy processes
@@ -31,7 +28,6 @@
   ansible.builtin.file:
     path: /var/run/tinyproxy/tinyproxy.pid
     state: absent
-  #become: true
   failed_when: false
 
 - name: Ensure log directory exists with correct permissions
@@ -42,15 +38,6 @@
     group: tinyproxy
     mode: '0755'
 
-## Создаем папку для PID файла
-#- name: Ensure run directory exists
-#  ansible.builtin.file:
-#    path: /var/run/tinyproxy
-#    state: directory
-#    owner: tinyproxy
-#    group: tinyproxy
-#    mode: '0755'
-#  ignore_errors: yes
 - name: Ensure run directory exists
   ansible.builtin.file:
     path: /var/run/tinyproxy
@@ -87,40 +74,20 @@
     group: root
     mode: '0644'
     backup: yes
-  #become: true
   notify: Restart Tinyproxy
 
-#- name: Validate tinyproxy configuration
-#  ansible.builtin.command: tinyproxy -c /etc/tinyproxy.conf
-#  register: config_check
-#  changed_when: false
-#  failed_when: false
-#
-# Отключаем UFW
 - name: Disable UFW firewall
   ansible.builtin.command: ufw disable
   args:
     warn: false
   changed_when: false
   failed_when: false
-#
-## Очищаем старый PID файл (частая причина проблем)
-#- name: Remove stale PID file
-#  ansible.builtin.file:
-#    path: /var/run/tinyproxy/tinyproxy.pid
-#    state: absent
-#  ignore_errors: yes
 
 - name: Start Tinyproxy service
   ansible.builtin.service:
     name: tinyproxy
     state: started
     enabled: yes
-  #become: true
-
-#- name: Start Tinyproxy manually (not via systemd)
-#  ansible.builtin.command: nohup tinyproxy -c /etc/tinyproxy/tinyproxy.conf > /dev/null 2>&1 &
-#  changed_when: false
 
 - name: Wait for Tinyproxy to be ready
   ansible.builtin.wait_for:
@@ -128,7 +95,6 @@
     host: "0.0.0.0"
     timeout: 30
     msg: "Tinyproxy failed to start listening on port 3128"
-  #become: true
 
 - name: Verify Tinyproxy is listening
   ansible.builtin.shell: ss -tlnp | grep 3128

@@ -17,7 +17,6 @@
     owner: root
     group: root
     mode: '0644'
-  become: yes
 
 - name: Install Docker prerequisites
   ansible.builtin.apt:
@@ -86,7 +85,6 @@
     path: /etc/systemd/system/docker.service.d
     state: directory
     mode: '0755'
-  become: true
 
 - name: Configure Docker proxy
   ansible.builtin.copy:
@@ -99,7 +97,6 @@
     owner: root
     group: root
     mode: '0644'
-  become: true
   notify: Restart Docker
 
 - name: Reload systemd daemon
@@ -112,12 +109,10 @@
   ansible.builtin.service:
     name: docker
     state: restarted
-  become: true
 
 - name: Wait for Docker to be ready after restart
   ansible.builtin.wait_for:
     timeout: 10
-  become: true
 
 - name: Add ubuntu user to docker group
   ansible.builtin.user:
